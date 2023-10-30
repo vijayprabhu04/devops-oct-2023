@@ -6,5 +6,5 @@
 
 ### Reset commands
 
-| mixed reset| `git reset --hard <head-id>`| will delete the commit & un-stage the files |
+| reset| `git reset --hard <head-id>`| will delete the commit & un-stage the files |
 

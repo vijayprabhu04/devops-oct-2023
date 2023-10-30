@@ -1,12 +1,22 @@
 # Region
 variable AWS_REGION {
-  default     = "us-west-2"
+  default     = "ap-south-1"
 }
 
-# VPC 
-variable "vpc" {
+# virtual private network
+variable my_vpc {
   default = {
-    id = "vpc-0b1564013b8666b6d"
-    cidr = "0.0.0.0/0"
+    cidr = "172.32.0.0/16"
+    subnet_cidr = "172.32.0.0/24"
+    vpc_name = "practice_vpc"
+    subnet_name = "practice-subnet"
+  }
+}
+
+# Instance tags
+variable my_instance {
+  default = {
+    myimage = "ami-0a9d27a9f4f5c0efc"
+    mytag = "dev-instance"
   }
 }

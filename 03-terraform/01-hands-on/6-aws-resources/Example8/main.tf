@@ -1,36 +1,28 @@
-# Create new security group :
-resource "aws_security_group" "sandbox_sg" {
-    name = "sandbox security group"
-    vpc_id = var.vpc.id
-
-    ingress {
-        description = "inbound"
-        from_port = 22
-        to_port = 22
-        protocol = "tcp"
-        cidr_blocks = [var.vpc.cidr]
-    }
-
-    egress {
-        description = "outbound"
-        from_port = 0
-        to_port = 0
-        protocol = "tcp"
-        cidr_blocks = [var.vpc.cidr]
-    }
-    
-    tags = {
-        sg_name = "sandbox-security-group"
-    }
-
+# Create vpc :
+resource "aws_vpc" "myvpc" {
+  cidr_block = var.my_vpc.cidr
+  tags = {
+    Name = var.my_vpc.vpc_name
+  }
 }
 
-# Create EC2 instance
-resource "aws_instance" "ec2_instance" {
-    ami = "ami-03f65b8614a860c29"
-    instance_type = "t2.micro"
-    vpc_security_group_ids = [aws_security_group.sandbox_sg.id]
-    tags = {Name = "HTTP_SERVER"}
-    key_name = "training"
-    count = 2
+# Create dedicated Subnet for your vpc :
+resource "aws_subnet" "mysubnet" {
+  vpc_id                  = aws_vpc.myvpc.id
+  cidr_block              = var.my_vpc.subnet_cidr
+  map_public_ip_on_launch = "true"
+  availability_zone       = "ap-south-1a"
+  tags = {
+    Name = var.my_vpc.subnet_name
+  }
+}
+
+# Create instance :
+resource "aws_instance" "myec2" {
+  ami = var.my_instance.myimage
+  instance_type = "t2.micro"
+  subnet_id = aws_subnet.mysubnet.id
+  tags = {
+    Name = var.my_instance.mytag
+  }
 }

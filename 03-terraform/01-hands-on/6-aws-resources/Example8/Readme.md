@@ -1,7 +1,6 @@
 # What are we doing with this code?
-* Using this code we are creating security group in AWS cloud platform
-* Create new EC2 instance attached with newly created security group and tags
-* Using count argument to create more the one resource.
+* Using this code we are creating vpc & subnets in AWS cloud platform.
+* Also attaching newly created subnets with EC2 instance.
 
 # Steps to execute this code?
 * `terraform init` 
