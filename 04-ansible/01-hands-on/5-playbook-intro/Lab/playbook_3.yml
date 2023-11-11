@@ -1,0 +1,14 @@
+---
+  - hosts: all
+    remote_users: vagrant
+    become: true
+    ignore_errors: true
+    gather_facts: yes
+    check_mode: yes
+    tasks:
+        - name: Install apache
+          yum: name=httpd state=present
+        - name: Install PHP
+          yum: name=php5 state=present
+        - name: Apache service restart
+          service: name=httpd state=restarted

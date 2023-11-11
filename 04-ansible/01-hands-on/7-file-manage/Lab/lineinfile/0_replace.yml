@@ -1,0 +1,14 @@
+---
+  - hosts: all
+    remote_user: vagrant
+    become: true
+    gather_facts: no
+    #check_mode: no
+    ignore_errors: true
+    tasks:
+        - name: Ensure Selinux is set to permissive mode
+          lineinfile:
+            path: /etc/selinux/config
+            regexp: '^SELINUX='
+            line: SELINUX=permissive
+          

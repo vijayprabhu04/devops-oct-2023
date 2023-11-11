@@ -1,0 +1,14 @@
+---
+  - hosts: all
+    become: true
+    gather_facts: no
+    #check_mode: no
+    ignore_errors: true
+    tasks:
+        - name: Delete line from a file
+          lineinfile:
+            path: /etc/selinux/config
+            regexp: '^this'
+            state: absent 
+            
+          

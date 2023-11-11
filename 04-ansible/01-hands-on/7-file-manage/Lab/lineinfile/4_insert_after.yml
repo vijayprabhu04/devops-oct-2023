@@ -1,0 +1,10 @@
+---
+  - hosts: all
+    gather_facts: no
+    tasks:
+        - name: Insert new line into a file after specific line 
+          lineinfile:
+            path: /tmp/linein
+            insertafter: '^172.22.84.10'
+            line: This is host file
+          

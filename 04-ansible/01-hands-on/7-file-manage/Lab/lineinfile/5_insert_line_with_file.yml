@@ -1,0 +1,14 @@
+---
+  - hosts: all
+    become: true
+    gather_facts: no
+    #check_mode: no
+    ignore_errors: true
+    tasks:
+        - name: Insert new line into a file if file not exist
+          lineinfile:
+            path: /tmp/line_in_file
+            line: 192.168.1.99 foo.lab.net foo
+            create: yes
+
+          

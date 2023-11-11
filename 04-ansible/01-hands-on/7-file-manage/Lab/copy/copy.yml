@@ -1,0 +1,13 @@
+---
+  - hosts: all
+    remote_user: vagrant
+    become: true
+    gather_facts: no
+    tasks: 
+      - name: Copy file with owner & permissions
+        copy:
+          src: devops_file
+          dest: /tmp
+          owner: root
+          group: root
+          mode: '0777'

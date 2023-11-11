@@ -1,0 +1,18 @@
+  ---
+    - hosts: all
+      remote_user: vagrant
+      become: true
+      tasks:
+          - name: Install apache
+            yum:
+              name: httpd 
+              state: present 
+          - name: Install PHP
+            yum: 
+              name: php5
+              state: present
+          - name: Apache service start
+            service: 
+              name: httpd
+              state: started
+  ...

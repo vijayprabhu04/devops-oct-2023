@@ -1,0 +1,10 @@
+---
+  - hosts: all
+    gather_facts: no
+    tasks:
+        - name: Insert new line into a file before specific line
+          lineinfile:
+            path: /tmp/line_in_file
+            insertbefore: '^SELINUXTYPE'
+            line: 172.22.84.10 myhost.example.com myhost
+          

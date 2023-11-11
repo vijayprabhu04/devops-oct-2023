@@ -1,0 +1,13 @@
+---
+  - hosts: all
+    remote_user: vagrant
+    become: true
+    gather_facts: no
+    vars:
+      version_number: '2.4.37'
+      server: ubuntu
+    tasks:
+      - name: Jinja2 file copy
+        template:
+          src: apache.j2
+          dest: /tmp/apache_version.txt

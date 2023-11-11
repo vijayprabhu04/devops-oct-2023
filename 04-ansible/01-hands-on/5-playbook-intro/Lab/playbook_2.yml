@@ -1,0 +1,16 @@
+---
+  - hosts: all
+    remote_user: vagrant
+    become: true
+    gather_facts: no
+    ignore_errors: true
+    check_mode: no
+    tasks:
+        - name: Uninstall apache
+          yum:
+            name: httpd
+            state: absent
+        - name: Apache service restart
+          service: 
+            name: httpd
+            state: stopped
