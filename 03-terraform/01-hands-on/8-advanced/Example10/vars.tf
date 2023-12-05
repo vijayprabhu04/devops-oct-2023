@@ -14,6 +14,6 @@ variable "AMI" {
 
 # SSH_USER
 variable "login_user" {
-  default = "ec2-user"
+  default = "ubuntu"
 }
 

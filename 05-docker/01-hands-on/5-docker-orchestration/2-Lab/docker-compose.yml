@@ -1,0 +1,22 @@
+version: "3.9"  # optional since v1.27.0
+services:
+    Master:
+        image: "myapp-build"
+        container_name: master
+        hostname: master
+        ports:             # port mapping
+            - "80:80"
+        volumes:           # volume mapping
+            - /tmp:/data
+    Target-node-1:
+        image: "myapp-build"
+        container_name: target1
+        hostname: target1
+        volumes:
+            - /tmp:/data
+    Target-node-2:
+        image: "myapp-build"
+        container_name: target2
+        hostname: target2
+        volumes:
+            - /tmp:/data
