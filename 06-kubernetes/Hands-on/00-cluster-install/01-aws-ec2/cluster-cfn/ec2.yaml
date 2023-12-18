@@ -1,0 +1,201 @@
+Description: >
+  This stack creates a EC2 instance, It also creates a CloudWatch event to
+  delete the stack after a specified amount of time.
+  This stack also installs Jenkins, Terraform in EC2 instance
+
+Parameters:
+  VPC:
+    Description: VPC ID to use
+    Type: String
+    Default: xxxxxx
+  InstanceLifeTimeMinutes:
+    Description: Instance lifetime in minutes
+    Type: Number
+    Default: 70 # Machine will be destructed after 70 minutes
+  InstanceType:
+    Description: Instance type to use
+    Type: String
+    Default: t2.medium
+  AmiImageID:
+    Description: Ami Image ID to use and this is ubuntu image from us-west-2
+    Type: String
+    Default: xxxxx
+  KeyPair:
+    Description: Keypair to be attached to instance
+    Type: String
+    Default: xxxxx
+
+Resources:
+  CreateInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref AmiImageID
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyPair
+      IamInstanceProfile: !Ref InstanceProfile
+      SecurityGroupIds:
+        - !Ref SecurityGroup
+      UserData: # Use this section to install any packages if required
+        'Fn::Base64':
+          !Sub |
+            #!/bin/bash -xe
+            sudo apt update
+            sudo apt install -y apt-transport-https ca-certificates curl software-properties-common
+            sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+            sudo echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+            sudo apt update
+            sudo apt-cache policy docker-ce
+            sudo apt-get install -y docker-ce
+            sudo apt-get update
+            sudo apt-get install -y apt-transport-https ca-certificates curl
+            sudo curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+            sudo echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+            sudo apt-get update
+            sudo apt-get install -y kubectl
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}"
+
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH access (allow all ports for practice)
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 0
+          ToPort: 65535
+          CidrIp: "0.0.0.0/0"
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: "0.0.0.0/0"
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref InstanceRole
+
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonS3FullAccess
+
+  DeleteStackLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: index.handler
+      Role: !GetAtt DeleteStackLambdaRole.Arn
+      Runtime: python3.9
+      Code:
+        ZipFile: !Sub |
+          import boto3
+          def handler(event, context):
+              print("Deleting stack")
+              stack_name = "${AWS::StackName}"
+              cfn = boto3.client('cloudformation')
+              try:
+                cfn.delete_stack(StackName=stack_name)
+              except Exception as e:
+                print(e)
+              return
+
+  DeleteStackLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: DeleteStackLambdaPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudformation:DeleteStack
+                  - lambda:DeleteFunction
+                  - lambda:RemovePermission
+                  - ec2:DeleteSecurityGroup
+                  - ec2:DescribeInstances
+                  - ec2:DeleteInstanceProfile
+                  - ec2:TerminateInstances
+                  - iam:DeleteRole
+                  - iam:RemoveRoleFromInstanceProfile
+                  - iam:DeleteInstanceProfile
+                  - iam:DetachRolePolicy
+                  - iam:DeleteRolePolicy
+                  - events:DeleteRule
+                  - events:RemoveTargets
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "*"
+
+  LambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt DeleteStackLambda.Arn
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt CloudWatchEvent.Arn
+
+  CloudWatchEvent:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: !Sub "Delete stack after ${InstanceLifeTimeMinutes} minutes"
+      ScheduleExpression: !Sub "rate(${InstanceLifeTimeMinutes} minutes)"
+      Targets:
+        - Arn: !GetAtt DeleteStackLambda.Arn
+          Id: DeleteStackLambda
+      State: ENABLED
+      RoleArn: !GetAtt CloudWatchEventRole.Arn
+
+  CloudWatchEventRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - events.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: CloudWatchEventPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource: !GetAtt DeleteStackLambda.Arn

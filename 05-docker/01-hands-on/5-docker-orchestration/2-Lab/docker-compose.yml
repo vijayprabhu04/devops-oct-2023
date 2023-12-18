@@ -1,22 +1,22 @@
 version: "3.9"  # optional since v1.27.0
 services:
-    Master:
-        image: "myapp-build"
-        container_name: master
-        hostname: master
+    container01:
+        image: "httpd"
+        container_name: webserver
+        hostname: apache
         ports:             # port mapping
             - "80:80"
         volumes:           # volume mapping
             - /tmp:/data
-    Target-node-1:
-        image: "myapp-build"
-        container_name: target1
-        hostname: target1
+    container02:
+        image: "vijayprabhu04/my_application_image"
+        container_name: dependent
+        hostname: dependent
         volumes:
             - /tmp:/data
-    Target-node-2:
-        image: "myapp-build"
-        container_name: target2
-        hostname: target2
+    container03:
+        image: "ubuntu"
+        container_name: monitoring
+        hostname: monitoring
         volumes:
             - /tmp:/data
