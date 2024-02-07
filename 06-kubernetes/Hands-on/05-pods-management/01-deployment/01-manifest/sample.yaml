@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: flipkart
+  namespace: development
+  labels:
+    object: flipkart-001
+spec:
+  replicas: 6 # modify replicas according to your case
+  selector:
+    matchLabels:
+      env: development
+
+# Pod details
+  template:
+    metadata:
+      name: payment-gateway
+      labels:
+        env: development
+    spec:
+      containers:
+      - name: payment-container
+        image: httpd
+        ports:
+         - containerPort: 80
+        resources:
+            requests:
+               cpu: "0.5"
+            limits:
+               cpu: "1"
+            requests:
+               memory: "100Mi"
+            limits:
+               memory: "200Mi"

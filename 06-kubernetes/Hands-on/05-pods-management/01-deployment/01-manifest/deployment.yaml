@@ -1,0 +1,32 @@
+# deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zomato
+  labels:
+    env: development
+spec:
+  selector:
+    matchLabels:
+      env: development
+      app: zomato-payment-microservice
+  replicas: 2
+
+# pod creation
+  template:
+    metadata:
+      name: zomato-frontend
+      labels:
+        env: development
+        app: zomato-payment-microservice
+    spec:
+      containers:
+      - name: zoamato-apache
+        image: httpd
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: 500m
+          requests:
+            cpu: 100m

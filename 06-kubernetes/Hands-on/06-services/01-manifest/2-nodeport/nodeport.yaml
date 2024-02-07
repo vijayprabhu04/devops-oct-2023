@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netflix
+  labels:
+    env: development
+spec:
+  selector:
+    matchLabels:
+      env: development
+      app: netflix-frontpage-microservice
+  replicas: 2
+
+# pod creation
+  template:
+    metadata:
+      name: netflix-frontend
+      labels:
+        env: development
+        app: netflix-frontpage-microservice
+    spec:
+      containers:
+      - name: netflix-apache
+        image: httpd
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: 500m
+          requests:
+            cpu: 100m
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: netflix-nodeport-service
+spec:
+  type: NodePort
+  selector:
+    env: development
+    app: netflix-frontpage-microservice
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+      nodePort: 30007

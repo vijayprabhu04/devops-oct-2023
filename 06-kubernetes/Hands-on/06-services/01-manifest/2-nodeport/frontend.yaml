@@ -1,0 +1,28 @@
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-for-nodeport-service
+spec:
+  selector:
+    matchLabels:
+      app: apache
+      env: dev
+      tag: nodeport-service
+  replicas: 1
+
+# pod creation
+  template:
+    metadata:
+      name: apache-pods
+      labels:
+        app: apache
+        env: dev
+        tag: nodeport-service
+    spec:
+      containers:
+      - name: apache
+        image: httpd
+        ports:
+        - containerPort: 80
+        
